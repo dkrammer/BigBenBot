@@ -2,24 +2,46 @@ require('dotenv').config();
 const Discord = require('discord.js');
 const cron = require('node-cron');
 
-const { TOKEN, VOICE_CHANNEL_ID, GUILD_ID, TEXT_CHANNEL_ID } = process.env;
+const { TOKEN, GUILD_ID, TEXT_CHANNEL_ID } = process.env;
+const VOICE_CHANNEL_ID = process.env.VOICE_CHANNEL_ID.split(' ');
 
 const Client = new Discord.Client();
 
-let guild, voiceChannel, textChannel ;
+let guild, voiceChannel, textChannel;
+
+// Searches for the voice channel with the most members and returns
+// the ID of that voice channel. Returns first ID in .env file if
+// all voice channels are empty
+function selectVC(vcList) {
+
+	let vcIdx = 0, max = 0;
+
+	for (let i = 0; i < vcList.length - 1; i++) {
+		voiceChannel = guild.channels.cache.get(vcList[i]);
+		if (voiceChannel.members.size > max) {
+			max = voiceChannel.members.size;
+			vcIdx = i;
+        }
+    }
+	return vcList[vcIdx];
+}
 
 // When bot comes online check the guild and voice channel are valid
 // if they are not found the program will exit
 Client.on('ready', async () => {
 	try {
 		guild = await Client.guilds.fetch(GUILD_ID);
-		voiceChannel = guild.channels.cache.get(VOICE_CHANNEL_ID);
+		voiceChannel = guild.channels.cache.get(selectVC(VOICE_CHANNEL_ID));
 	} catch (error) {
 		console.log(error);
 		process.exit(1);
 	}
 	textChannel = guild.channels.cache.get(TEXT_CHANNEL_ID);
 	console.log('Big Ben Ready...');
+	console.log(`VC ID is ${Number(voiceChannel)}`);
+	console.log(`VC List len is ${VOICE_CHANNEL_ID.length}`);
+	console.log(`TEXT CHANNEL ID is ${TEXT_CHANNEL_ID}`);
+
 });
 
 // use node-cron to create a job to run every hour
