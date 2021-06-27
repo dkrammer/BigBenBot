@@ -3,7 +3,7 @@ const Discord = require('discord.js');
 const cron = require('node-cron');
 
 const { TOKEN, GUILD_ID, TEXT_CHANNEL_ID } = process.env;
-const VOICE_CHANNEL_ID = process.env.VOICE_CHANNEL_ID.split(' ');
+const VOICE_CHANNEL_IDS = process.env.VOICE_CHANNEL_IDS.split(' ');
 
 const Client = new Discord.Client();
 
@@ -23,8 +23,8 @@ function selectVC(vcList) {
 			vcIdx = i;
         }
 	}
-	console.log(`VC ID is ${Number(vcList[vcIdx])}`);
-	return Number(vcList[vcIdx]);
+	console.log(`VC ID is ${vcList[vcIdx]}, this is select fct msg`);
+	return guild.channels.cache.get(vcList[vcIdx]);
 }
 
 function printInfoToConsole() {
@@ -36,17 +36,13 @@ function printInfoToConsole() {
 Client.on('ready', async () => {
 	try {
 		guild = await Client.guilds.fetch(GUILD_ID);
-		voiceChannel = guild.channels.cache.get(selectVC(VOICE_CHANNEL_ID));
+		//voiceChannel = selectVC(VOICE_CHANNEL_IDS); Not necessary but not harmful?
 	} catch (error) {
 		console.log(error);
 		process.exit(1);
 	}
 	textChannel = guild.channels.cache.get(TEXT_CHANNEL_ID);
 	console.log('Big Ben Ready...');
-	console.log(`VC ID is ${Number(voiceChannel)}`);
-	console.log(`VC List len is ${VOICE_CHANNEL_ID.length}`);
-	console.log(`TEXT CHANNEL ID is ${TEXT_CHANNEL_ID}`);
-
 });
 
 // use node-cron to create a job to run every hour
@@ -63,9 +59,8 @@ const task = cron.schedule('0 0 */1 * * *', async () => {
 	}
 
 	// redetermine voice channel with most members
-	voiceChannel = guild.channels.cache.get(selectVC(VOICE_CHANNEL_ID));
+	voiceChannel = selectVC(VOICE_CHANNEL_IDS);
 	console.log(`The time is now ${hour}:00 ${amPm} GMT${timezoneOffsetString}`);
-	
 
 	// check if VC defined in config is empty
 	if (voiceChannel.members.size >= 1) {
