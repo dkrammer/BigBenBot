@@ -22,8 +22,13 @@ function selectVC(vcList) {
 			max = voiceChannel.members.size;
 			vcIdx = i;
         }
-    }
-	return vcList[vcIdx];
+	}
+	console.log(`VC ID is ${Number(vcList[vcIdx])}`);
+	return Number(vcList[vcIdx]);
+}
+
+function printInfoToConsole() {
+
 }
 
 // When bot comes online check the guild and voice channel are valid
@@ -56,6 +61,11 @@ const task = cron.schedule('0 0 */1 * * *', async () => {
 		
 		textChannel.send(messageEmbed);
 	}
+
+	// redetermine voice channel with most members
+	voiceChannel = guild.channels.cache.get(selectVC(VOICE_CHANNEL_ID));
+	console.log(`The time is now ${hour}:00 ${amPm} GMT${timezoneOffsetString}`);
+	
 
 	// check if VC defined in config is empty
 	if (voiceChannel.members.size >= 1) {
