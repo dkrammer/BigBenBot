@@ -2,12 +2,14 @@ require('dotenv').config();
 const Discord = require('discord.js');
 const cron = require('node-cron');
 
-const { TOKEN, GUILD_ID, TEXT_CHANNEL_ID } = process.env;
+const { TOKEN, GUILD_ID, ADMIN_TEXT_CHANNEL_ID, MUTE_CHAT_CHANNEL_ID, DEBUG_VC, DEBUG_TC, BOT_ID} = process.env;
 const VOICE_CHANNEL_IDS = process.env.VOICE_CHANNEL_IDS.split(' ');
+const prefix = "b.";
 
 const Client = new Discord.Client();
 
-let guild, voiceChannel, textChannel;
+let guild, voiceChannel, adminTextChannel, muteChat, debugVc, debugTc, gifSent;
+let powerGif = "youHaveNoPower.gif";
 
 // Searches for the voice channel with the most members and returns
 // the ID of that voice channel. Returns first ID in .env file if
@@ -23,12 +25,7 @@ function selectVC(vcList) {
 			vcIdx = i;
         }
 	}
-	console.log(`VC ID is ${vcList[vcIdx]}, this is select fct msg`);
 	return guild.channels.cache.get(vcList[vcIdx]);
-}
-
-function printInfoToConsole() {
-
 }
 
 // When bot comes online check the guild and voice channel are valid
@@ -41,26 +38,96 @@ Client.on('ready', async () => {
 		console.log(error);
 		process.exit(1);
 	}
-	textChannel = guild.channels.cache.get(TEXT_CHANNEL_ID);
+	adminTextChannel = guild.channels.cache.get(ADMIN_TEXT_CHANNEL_ID);
+	muteChat = guild.channels.cache.get(MUTE_CHAT_CHANNEL_ID);
 	console.log('Big Ben Ready...');
+
+	debugVc = guild.channels.cache.get(DEBUG_VC);
+	debugTc = guild.channels.cache.get(DEBUG_TC);
+	//const connection = await debugVc.join();
+	//console.log("Joined debug vc")
+
+	gifSent = false;
+
 });
+
+// Basic message detection functionality
+Client.on('message', async message => {
+	/*
+	if (!message.content.startsWith(prefix) || message.author.bot) return;
+
+	const args = message.content.slice(prefix.length).trim().split(/ +/);
+	const command = args.shift().toLowerCase();
+	*/
+
+	if (!message.content.startsWith(prefix) || message.author.bot) {
+		return;
+	}
+	else {
+		if (message.content.endsWith("fun fact")) {
+			message.channel.send("Did you know the American CIA would put plastic pieces at the top of people's mouth to change the way they talked as one form of disguise?");
+		}
+		else if (message.content.endsWith("avatar")) {
+			//const avatarEmbed = new Discord.MessageEmbed()
+			//	.setImage(message.author.displayAvatarURL());
+			//.setDescription("test");
+			message.channel.send(message.author.displayAvatarURL());
+		}/*
+		else if (message.content.includes("mute")) {
+			let member = message.guild.member(message.mentions.users.first());
+			await member.edit({ mute: true });
+			console.log(`Muted ${member}`);
+        }*/
+    }
+
+	
+});
+
+// Stops Big Ben from being server muted
+Client.on('voiceStateUpdate', async (oldState, newState) => {
+
+	if (newState.mute && newState.member.id == BOT_ID) {
+
+		const logs = await oldState.guild.fetchAuditLogs({
+			limit: 1,
+			type: 'MEMBER_UPDATE',
+		});
+
+		const { executor, target } = logs.entries.first();
+
+		let member = newState.member;
+		await member.edit({ serverMute: false, mute: false });
+		if (!gifSent) {
+			
+			await muteChat.send(`${executor}`, {
+				files: [powerGif]
+			});
+			gifSent = true;
+		}
+    }
+});
+
 
 // use node-cron to create a job to run every hour
 const task = cron.schedule('0 0 */1 * * *', async () => {
+
+	gifSent = false;
+
 	let { hour, amPm, timezoneOffsetString } = getTimeInfo();
 
 	// if text channel was defined send message in chat
-	if (textChannel) {
+	/*
+	if (adminTextChannel) {
 		const messageEmbed = new Discord.MessageEmbed()
 		.setColor('#FFD700')
 		.setTitle(`The time is now ${hour}:00 ${amPm} GMT${timezoneOffsetString}`)
 		
-		textChannel.send(messageEmbed);
+		adminTextChannel.send(messageEmbed);
 	}
+	*/
 
 	// redetermine voice channel with most members
 	voiceChannel = selectVC(VOICE_CHANNEL_IDS);
-	console.log(`The time is now ${hour}:00 ${amPm} GMT${timezoneOffsetString}`);
 
 	// check if VC defined in config is empty
 	if (voiceChannel.members.size >= 1) {
