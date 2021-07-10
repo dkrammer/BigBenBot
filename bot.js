@@ -8,7 +8,7 @@ const prefix = "b.";
 
 const Client = new Discord.Client();
 
-let guild, voiceChannel, adminTextChannel, muteChat, debugVc, debugTc, gifSent;
+let guild, voiceChannel, adminTextChannel, muteChat, debugVc, debugTc, gifSent, j;
 let powerGif = "youHaveNoPower.gif";
 
 // Searches for the voice channel with the most members and returns
@@ -59,6 +59,42 @@ Client.on('message', async message => {
 	const args = message.content.slice(prefix.length).trim().split(/ +/);
 	const command = args.shift().toLowerCase();
 	*/
+
+	if (message.author.bot) {
+		return;
+	}
+	if (j) {
+		if (message.content.includes("Reesor")) {
+			message.channel.send("He could jump off me any time.");
+		}
+		else if (message.content.includes("Hoang")) {
+			message.channel.send("Eh, ask me again later.");
+		}
+		else {
+			message.channel.send("Who?");
+		}
+		j = false;
+    }
+
+	if (message.content.includes("fun fact")) {
+		message.channel.send("Did you know the American CIA would put plastic pieces at the top of people's mouth to change the way they talked as one form of disguise?");
+	}
+
+	if (message.content.startsWith("Hey Big Ben, what do you think of ")) {
+		if (message.content.endsWith("Clayton?")) {
+			message.channel.send("Stellar guy, solid friend, quick as a whip and sexy as hell. 10/10 would share a Big Ben Beer with him.");
+		}
+		else if (message.content.endsWith("Tony?")) {
+			message.channel.send("Hanzo main, that's all I'll say.");
+		}
+		else if (message.content.endsWith("Justin?")) {
+			message.channel.send("Reesor or Hoang?");
+			j = true;
+		}
+		else {
+			message.channel.send("Eh, ask me again later.");
+        }
+    }
 
 	if (!message.content.startsWith(prefix) || message.author.bot) {
 		return;
